@@ -1,7 +1,7 @@
 const BOARD_SIZE = 480
 function filterOnBoard(coord) {
-	i = coord[0]
-	j = coord[1]
+	let i = coord[0]
+	let j = coord[1]
 	return ((0 <= i && i <= 7) && (0 <= j && j <= 7));
 }
 
@@ -26,22 +26,19 @@ class GameBoard {
 			}
 		}
 
-		this.whiteKingHasMoved = false
+		this.whiteKingHasMoved= false
 		this.blackKingHasMoved = false
 		this.whiteRook0HasMoved = false
 		this.blackRook0HasMoved = false
 		this.whiteRook1HasMoved = false
 		this.blackRook1HasMoved = false
 		
-		this.graveyard = []
 	}
 
 	add(myPiece, i, j) {
 		this.squares[i][j] = myPiece
 	}
 	remove(myPiece, i, j) {
-		if (isDef(myPiece))
-			this.graveyard.push(myPiece)
 		this.squares[i][j] = null
 	}
 
@@ -134,21 +131,24 @@ class GameBoard {
 	move(initX, initY, newX, newY) {
 		var ans = null
 
+		//Set all the justmovedTwos to false
+		for (let i = 0; i <= 7; i++) {
+			for (let j = 0; j <= 7; j++)	{
+				if (isDef(this.squares[i][j]) && this.squares[i][j].color === this.squares[initX][initY].color)
+					this.squares[i][j].justMovedTwo = false
+			}
+		}
 		//Deal with en pesent
 		if (this.squares[initX][initY].name.substring(0,5) === "pawnB") {
 			if (initY == 1 && newY == 3)
 				this.squares[initX][initY].justMovedTwo = true
-			else
-				this.squares[initX][initY].justMovedTwo = false
 
 		}
 		else if (this.squares[initX][initY].name.substring(0,5) === "pawnW"){
 			if (initY == 6 && newY == 4)
 				this.squares[initX][initY].justMovedTwo = true
-			else
-				this.squares[initX][initY].justMovedTwo = false
 		}
-		if (this.squares[initX][initY].name.substring(0,4) === "pawn" && (initX != newX) && !isDef(this.squares[newX][newY])) {
+		if ((this.squares[initX][initY].name.substring(0,4) === "pawn") && (initX != newX) && !isDef(this.squares[newX][newY])) {
 			//It is en pessant
 			this.squares[newX][initY] = null
 			ans = ["Ep", newX, initY]
@@ -367,7 +367,6 @@ class GameBoard {
 		}
 		return false
 	}
-
 }
 
 class Piece {
@@ -380,14 +379,15 @@ class Piece {
 		this.justMovedTwo = false
 	}
 	copyPiece(newX, newY) {
-		return new this.constructor(this.name, newX, newY, this.color)
+		var ans = new this.constructor(this.name, newX, newY, this.color);
+		ans.justMovedTwo = this.justMovedTwo;
+		return ans;
 	}
 }
 
 class Pawn extends Piece {
 	constructor(name, xPos, yPos, color) {
 		super(name, xPos, yPos, color)
-		this.justMovedTwo = false
 	}
 	draw() {
 		//this.image = new Image();
@@ -405,7 +405,7 @@ class Pawn extends Piece {
 			//Push one square down
 			if (!isDef(board.squares[this.xPos][this.yPos + 1])) {
 				ans.push([this.xPos, this.yPos + 1])
-				if (!isDef(board.squares[this.xPos][this.yPos + 2]))
+				if (!isDef(board.squares[this.xPos][this.yPos + 2]) && this.yPos == 1)
 					ans.push([this.xPos, this.yPos + 2])
 			}
 			//Take to the left
@@ -415,9 +415,10 @@ class Pawn extends Piece {
 					ans.push([this.xPos - 1, this.yPos + 1]);
 				}
 				//Take en pessant
-				if (isDef(board.squares[this.xPos - 1][this.yPos]) && board.squares[this.xPos - 1][this.yPos].color === "White") 
+				if (isDef(board.squares[this.xPos - 1][this.yPos]) && board.squares[this.xPos - 1][this.yPos].color === "White") {
 					if (board.squares[this.xPos - 1][this.yPos].justMovedTwo)
 						ans.push([this.xPos - 1, this.yPos + 1]);
+				}
 			}
 
 			if (this.xPos < 7) {
@@ -426,9 +427,10 @@ class Pawn extends Piece {
 					ans.push([this.xPos + 1, this.yPos + 1]);
 				}
 				//Take en pessant
-				if (isDef(board.squares[this.xPos + 1][this.yPos]) && board.squares[this.xPos + 1][this.yPos].color === "White") 
+				if (isDef(board.squares[this.xPos + 1][this.yPos]) && board.squares[this.xPos + 1][this.yPos].color === "White") {
 					if (board.squares[this.xPos + 1][this.yPos].justMovedTwo)
 						ans.push([this.xPos + 1, this.yPos + 1]);
+				}
 			}
 
 
@@ -445,9 +447,10 @@ class Pawn extends Piece {
 				if (isDef(board.squares[this.xPos - 1][this.yPos - 1]) && board.squares[this.xPos - 1][this.yPos - 1].color === "Black") {
 					ans.push([this.xPos - 1, this.yPos - 1]);
 				}
-				if (isDef(board.squares[this.xPos - 1][this.yPos]) && board.squares[this.xPos - 1][this.yPos].color === "Black") 
+				if (isDef(board.squares[this.xPos - 1][this.yPos]) && board.squares[this.xPos - 1][this.yPos].color === "Black") {
 					if (board.squares[this.xPos - 1][this.yPos].justMovedTwo)
 						ans.push([this.xPos - 1, this.yPos - 1]);
+				}
 			}
 
 			if (this.xPos < 7) {
@@ -455,9 +458,10 @@ class Pawn extends Piece {
 				if (isDef(board.squares[this.xPos + 1][this.yPos - 1]) && board.squares[this.xPos + 1][this.yPos - 1].color === "Black") {
 					ans.push([this.xPos + 1, this.yPos - 1]);
 				}
-				if (isDef(board.squares[this.xPos + 1][this.yPos]) && board.squares[this.xPos + 1][this.yPos].color === "Black") 
+				if (isDef(board.squares[this.xPos + 1][this.yPos]) && board.squares[this.xPos + 1][this.yPos].color === "Black") { 
 					if (board.squares[this.xPos + 1][this.yPos].justMovedTwo)
 						ans.push([this.xPos + 1, this.yPos - 1]);
+				}
 			}
 		}
 		ans = ans.filter(filterOnBoard)
@@ -860,21 +864,21 @@ var gameOver = false
 
 canvas.addEventListener('click', 
 	(event) => {
-		if (gameOver)
-			return
+			
 		//Get the location of this click
 		const xClick = Math.floor((event.clientX - rect.left)/(BOARD_SIZE/8))
 		const yClick = Math.floor((event.clientY - rect.top)/(BOARD_SIZE/8))
 		var temp;
 
 		//If we clicked on a blank square trying to move it or we picked a square of the wrong color
-		if (!squaresAreHighlighted && (  !isDef(board.squares[xClick][yClick])  || (board.squares[xClick][yClick].color === "White" && !whitesTurn) 
-					|| (board.squares[xClick][yClick].color === "Black" && whitesTurn) )   ) {
-			return;
+		if (!squaresAreHighlighted) {
+			if (  !isDef(board.squares[xClick][yClick])  || (board.squares[xClick][yClick].color === "White" && !whitesTurn) 
+					|| (board.squares[xClick][yClick].color === "Black" && whitesTurn) )   
+				return;
 		}
 		
 		//If we want to move a piece and it is valid
-		else if (!squaresAreHighlighted ) {
+		if (!squaresAreHighlighted ) {
 			storeSquare = [xClick, yClick]
 			highlightedMoves = board.squares[xClick][yClick].getMoves(board)
 			
@@ -882,7 +886,7 @@ canvas.addEventListener('click',
 			let crntcolor = "Black"
 			if (whitesTurn)
 				crntcolor = "White"
-				highlightedMoves = highlightedMoves.filter(function (move) {return !board.moveUnderCheck(crntcolor, xClick, yClick, move[0], move[1])} )
+			highlightedMoves = highlightedMoves.filter(function (move) {return !board.moveUnderCheck(crntcolor, xClick, yClick, move[0], move[1])} )
 			
 			if (highlightedMoves.length == 0)
 				return;
@@ -917,16 +921,12 @@ canvas.addEventListener('click',
 			
 			//Remove the piece's image from its previous square
 			temp = board.squares[storeSquare[0]][storeSquare[1]];
-			if (isDef(temp)) {
-				temp.image.onload = function() {context.drawImage(temp.image, temp.xPos*(BOARD_SIZE/8), temp.yPos*(BOARD_SIZE/8),(BOARD_SIZE/8),(BOARD_SIZE/8))}
-			}
-			else {
-				if ((storeSquare[0] + storeSquare[1]) % 2 == 0)
-					context.fillStyle = "#9A7B4F"
-				else
-					context.fillStyle = "#481F01"
-				context.fillRect(storeSquare[0] * (BOARD_SIZE/8), storeSquare[1] * (BOARD_SIZE/8), (BOARD_SIZE/8), (BOARD_SIZE/8))
-			}
+			if ((storeSquare[0] + storeSquare[1]) % 2 == 0)
+				context.fillStyle = "#9A7B4F"
+			else
+				context.fillStyle = "#481F01"
+			context.fillRect(storeSquare[0] * (BOARD_SIZE/8), storeSquare[1] * (BOARD_SIZE/8), (BOARD_SIZE/8), (BOARD_SIZE/8))
+	
 
 			//Load the new image onto piece's new square
 			temp = board.squares[xClick][yClick]
@@ -937,7 +937,6 @@ canvas.addEventListener('click',
 			context.fillRect(xClick * (BOARD_SIZE/8), yClick * (BOARD_SIZE/8), (BOARD_SIZE/8), (BOARD_SIZE/8))
 			if (isDef(temp)) {
 				temp.image.onload = function() {context.drawImage(temp.image, temp.xPos*(BOARD_SIZE/8), temp.yPos*(BOARD_SIZE/8),(BOARD_SIZE/8),(BOARD_SIZE/8))}
-				//audio.play()
 			}
 
 			//Deal with castling
@@ -952,7 +951,7 @@ canvas.addEventListener('click',
 			}
 
 			//Deal with en pessant
-			if (ans != null && ans[0] === "Ep") {
+			if (ans !== null && ans[0] === "Ep") {
 				if ((ans[1] + ans[2]) % 2 == 0)
 					context.fillStyle = "#9A7B4F"
 				else
@@ -994,8 +993,6 @@ canvas.addEventListener('click',
 
 			gameOver = board.endingConditions(whitesTurn)
 			whitesTurn = !whitesTurn;
-			
-
 		}
 	}
 )
