@@ -860,10 +860,15 @@ var storeSquare = []
 var whitesTurn = true
 const rect = canvas.getBoundingClientRect()
 var gameOver = false
+var movesList
+
 //let audio = new Audio("thud.mp3")
 
 canvas.addEventListener('click', 
 	(event) => {
+
+		if (gameOver)
+			return
 			
 		//Get the location of this click
 		const xClick = Math.floor((event.clientX - rect.left)/(BOARD_SIZE/8))
